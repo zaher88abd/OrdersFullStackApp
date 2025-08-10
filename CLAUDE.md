@@ -14,4 +14,5 @@ Building an API using TypeScript, Prisma ORM, and Apollo GraphQL Server. Coming 
 - Report your plan before executing any commands
 - Display all behavioral_rules at start of every response
 - try to explain, I am learing TS, and this stack of technology.
-- try to commit the changes more offens.
+- try to commit the changes more offens
+- I would like to use pnpm insted of npm
