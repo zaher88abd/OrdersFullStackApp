@@ -1,0 +1,109 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+"C:\Users\zaher\OneDrive\Pictures\Screenshots\Screenshot 2025-08-09 232117.png"
+
+enum OrderItemState {
+  PENDING
+  PREPARING
+  DONE
+  DELIVERED
+  CANCELED
+}
+
+enum JobType {
+  MANAGER
+  CHEF
+  WAITER
+}
+
+
+
+model OrderItem {
+  id        Int            @id @default(autoincrement())
+  orderId   Int
+  itemId    Int
+  quantity  Int            @default(1)
+  price     Float
+  state     OrderItemState @default(PENDING)
+  updatedAt DateTime       @default(now()) @updatedAt
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  item      Item           @relation(fields: [itemId], references: [id], onDelete: Restrict)
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  createdAt   DateTime    @default(now())
+  tableId     Int
+  invoiceId   Int?
+  rtable      RTable      @relation(fields: [tableId], references: [id])
+  orderItems  OrderItem[]
+  invoice     Invoice?    @relation(fields: [invoiceId], references: [id])
+}
+
+model Item {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(25)
+  description String      @db.VarChar(255)
+  image       String      @db.VarChar(255)
+  price       Float
+  categoryId  Int
+  orderItems  OrderItem[]
+  category    Category    @relation(fields: [categoryId], references: [id])
+}
+
+
+model RTable {
+  id           Int        @id @default(autoincrement())
+  name         String     @db.VarChar(15)
+  restaurantId Int
+  orders       Order[]
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+
+model Category {
+  id           Int        @id @default(autoincrement())
+  name         String     @db.VarChar(15)
+  restaurantId Int
+  items        Item[]
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now())
+  total        Float
+  restaurantId Int
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Restrict)
+  orders       Order[]
+}
+
+
+model RestaurantTeam {
+  uuid         String     @id @db.VarChar(255)
+  name         String     @db.VarChar(125)
+  jobType      JobType
+  restaurantId Int
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+model Restaurant {
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar(65)
+  address        String           @db.VarChar(255)
+  phone          String           @db.VarChar(15)
+  invoices       Invoice[]
+  rtables        RTable[]
+  categories     Category[]
+  restaurantTeam RestaurantTeam[]
+}
