@@ -43,8 +43,8 @@ module.exports = {
     }
   },
   
-  // Setup files to run before tests
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  // Setup files to run before tests (commented out for initial testing)
+  // setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   
   // Clear mocks between tests (like pytest fixtures)
   clearMocks: true,
