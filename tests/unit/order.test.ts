@@ -2,9 +2,23 @@
 // Demonstrates testing of more complex business logic
 
 import { orderResolvers } from '../../src/resolvers/order';
-import { PrismaClient } from '@prisma/client';
 
-const mockPrisma = new PrismaClient() as jest.Mocked<PrismaClient>;
+// Create properly mocked Prisma client with Jest mock functions
+const mockPrisma = {
+  order: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    delete: jest.fn(),
+  },
+  orderItem: {
+    findMany: jest.fn(),
+  },
+  invoice: {
+    findUnique: jest.fn(),
+  },
+} as any;
+
 const mockContext = { prisma: mockPrisma };
 
 // Test data
@@ -37,7 +51,7 @@ describe('Order Resolvers', () => {
     test('orders: should return all orders when no tableId provided', async () => {
       // Test querying all orders (like SELECT * FROM orders)
       const mockOrders = [mockOrder];
-      (mockPrisma.order.findMany as jest.Mock).mockResolvedValue(mockOrders);
+      mockPrisma.order.findMany.mockResolvedValue(mockOrders);
 
       const result = await orderResolvers.Query.orders(
         null,
@@ -64,7 +78,7 @@ describe('Order Resolvers', () => {
     test('orders: should filter by tableId when provided', async () => {
       // Test conditional querying - shows TypeScript optional parameters
       const tableId = 1;
-      (mockPrisma.order.findMany as jest.Mock).mockResolvedValue([mockOrder]);
+      mockPrisma.order.findMany.mockResolvedValue([mockOrder]);
 
       const result = await orderResolvers.Query.orders(
         null,
@@ -89,7 +103,7 @@ describe('Order Resolvers', () => {
 
     test('order: should return single order with nested data', async () => {
       // Test deep nesting - shows GraphQL's nested data fetching
-      (mockPrisma.order.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+      mockPrisma.order.findUnique.mockResolvedValue(mockOrder);
 
       const result = await orderResolvers.Query.order(
         null,
@@ -125,7 +139,7 @@ describe('Order Resolvers', () => {
         invoice: null,
       };
 
-      (mockPrisma.order.create as jest.Mock).mockResolvedValue(expectedOrder);
+      mockPrisma.order.create.mockResolvedValue(expectedOrder);
 
       const result = await orderResolvers.Mutation.createOrder(
         null,
@@ -146,7 +160,7 @@ describe('Order Resolvers', () => {
 
     test('deleteOrder: should delete order and handle cascade', async () => {
       // Test cascade deletion (orderItems should be deleted automatically)
-      (mockPrisma.order.delete as jest.Mock).mockResolvedValue(mockOrder);
+      mockPrisma.order.delete.mockResolvedValue(mockOrder);
 
       const result = await orderResolvers.Mutation.deleteOrder(
         null,
@@ -163,7 +177,7 @@ describe('Order Resolvers', () => {
     test('deleteOrder: should handle deletion errors gracefully', async () => {
       // Test error handling with logging
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      (mockPrisma.order.delete as jest.Mock).mockRejectedValue(new Error('Cannot delete'));
+      mockPrisma.order.delete.mockRejectedValue(new Error('Cannot delete'));
 
       const result = await orderResolvers.Mutation.deleteOrder(
         null,
@@ -193,7 +207,7 @@ describe('Order Resolvers', () => {
         }
       ];
 
-      (mockPrisma.orderItem.findMany as jest.Mock).mockResolvedValue(mockOrderItems);
+      mockPrisma.orderItem.findMany.mockResolvedValue(mockOrderItems);
 
       const result = await orderResolvers.Order.orderItems(
         { id: 1 }, // parent order
@@ -223,7 +237,7 @@ describe('Order Resolvers', () => {
     test('Order.invoice: should fetch invoice when linked', async () => {
       // Test invoice relationship
       const mockInvoice = { id: 1, total: 100 };
-      (mockPrisma.invoice.findUnique as jest.Mock).mockResolvedValue(mockInvoice);
+      mockPrisma.invoice.findUnique.mockResolvedValue(mockInvoice);
 
       const result = await orderResolvers.Order.invoice(
         { invoiceId: 1 }, // Invoice linked

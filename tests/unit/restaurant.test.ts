@@ -3,11 +3,22 @@
 // Similar to testing individual functions in Python with unittest or pytest
 
 import { restaurantResolvers } from '../../src/resolvers/restaurant';
-import { PrismaClient } from '@prisma/client';
 
-// Create mock context with mocked Prisma client
-// This is like creating mock objects in Python testing
-const mockPrisma = new PrismaClient() as jest.Mocked<PrismaClient>;
+// Create properly mocked Prisma client
+// This creates actual Jest mock functions that we can control
+const mockPrisma = {
+  restaurant: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  invoice: {
+    findMany: jest.fn(),
+  },
+} as any;
+
 const mockContext = { prisma: mockPrisma };
 
 // Test data - similar to fixtures in pytest
@@ -36,7 +47,7 @@ describe('Restaurant Resolvers', () => {
     test('restaurants: should return all restaurants', async () => {
       // Arrange - set up the test data and mocks
       // This is like the "given" part of BDD testing
-      (mockPrisma.restaurant.findMany as jest.Mock).mockResolvedValue(mockRestaurants);
+      mockPrisma.restaurant.findMany.mockResolvedValue(mockRestaurants);
 
       // Act - call the resolver function
       // This is like the "when" part of BDD testing
@@ -63,7 +74,7 @@ describe('Restaurant Resolvers', () => {
     test('restaurant: should return a single restaurant by id', async () => {
       // Test the findUnique operation
       const restaurantId = 1;
-      (mockPrisma.restaurant.findUnique as jest.Mock).mockResolvedValue(mockRestaurant);
+      mockPrisma.restaurant.findUnique.mockResolvedValue(mockRestaurant);
 
       const result = await restaurantResolvers.Query.restaurant(
         null,
@@ -85,7 +96,7 @@ describe('Restaurant Resolvers', () => {
 
     test('restaurant: should return null for non-existent id', async () => {
       // Test edge case - similar to testing error conditions in Python
-      (mockPrisma.restaurant.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.restaurant.findUnique.mockResolvedValue(null);
 
       const result = await restaurantResolvers.Query.restaurant(
         null,
@@ -107,7 +118,7 @@ describe('Restaurant Resolvers', () => {
       };
 
       const expectedResult = { id: 2, ...input, invoices: [], rtables: [], categories: [], restaurantTeam: [] };
-      (mockPrisma.restaurant.create as jest.Mock).mockResolvedValue(expectedResult);
+      mockPrisma.restaurant.create.mockResolvedValue(expectedResult);
 
       const result = await restaurantResolvers.Mutation.createRestaurant(
         null,
@@ -132,7 +143,7 @@ describe('Restaurant Resolvers', () => {
       const input = { name: 'Updated Restaurant' };
       const expectedResult = { ...mockRestaurant, ...input };
 
-      (mockPrisma.restaurant.update as jest.Mock).mockResolvedValue(expectedResult);
+      mockPrisma.restaurant.update.mockResolvedValue(expectedResult);
 
       const result = await restaurantResolvers.Mutation.updateRestaurant(
         null,
@@ -156,7 +167,7 @@ describe('Restaurant Resolvers', () => {
     test('deleteRestaurant: should delete restaurant and return true', async () => {
       // Test successful deletion
       const restaurantId = 1;
-      (mockPrisma.restaurant.delete as jest.Mock).mockResolvedValue(mockRestaurant);
+      mockPrisma.restaurant.delete.mockResolvedValue(mockRestaurant);
 
       const result = await restaurantResolvers.Mutation.deleteRestaurant(
         null,
@@ -173,7 +184,7 @@ describe('Restaurant Resolvers', () => {
     test('deleteRestaurant: should return false when deletion fails', async () => {
       // Test error handling - like testing exceptions in Python
       const restaurantId = 1;
-      (mockPrisma.restaurant.delete as jest.Mock).mockRejectedValue(new Error('Foreign key constraint'));
+      mockPrisma.restaurant.delete.mockRejectedValue(new Error('Foreign key constraint'));
 
       const result = await restaurantResolvers.Mutation.deleteRestaurant(
         null,
@@ -189,7 +200,7 @@ describe('Restaurant Resolvers', () => {
     // Test nested field resolution
     test('Restaurant.invoices: should return invoices for restaurant', async () => {
       const mockInvoices = [{ id: 1, total: 100, restaurantId: 1 }];
-      (mockPrisma.invoice.findMany as jest.Mock).mockResolvedValue(mockInvoices);
+      mockPrisma.invoice.findMany.mockResolvedValue(mockInvoices);
 
       const result = await restaurantResolvers.Restaurant.invoices(
         { id: 1 }, // parent restaurant
