@@ -9,9 +9,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
-"C:\Users\zaher\OneDrive\Pictures\Screenshots\Screenshot 2025-08-09 232117.png"
-
 enum OrderItemState {
   PENDING
   PREPARING

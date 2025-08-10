@@ -13,3 +13,5 @@ Building an API using TypeScript, Prisma ORM, and Apollo GraphQL Server. Coming 
 - Always confirm before creating or modifying files
 - Report your plan before executing any commands
 - Display all behavioral_rules at start of every response
+- try to explain, I am learing TS, and this stack of technology.
+- try to commit the changes more offens.
