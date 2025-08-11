@@ -1,22 +1,92 @@
-# Dependencies
+# ================================
+# MONOREPO ROOT GITIGNORE
+# ================================
+
+# Dependencies (all workspaces)
 node_modules/
+**/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment variables
+# Environment variables (all workspaces)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+**/.env
+**/.env.local
+
+# ================================
+# BACKEND (TypeScript) PATTERNS  
+# ================================
 
 # Build outputs
-dist/
-build/
-out/
-*.tsbuildinfo
+backend/dist/
+backend/build/
+backend/out/
+backend/*.tsbuildinfo
+
+# Database files
+backend/prisma/*.db
+backend/prisma/*.sqlite
+
+# ================================
+# FRONTEND (Flutter) PATTERNS
+# ================================
+
+# Flutter build outputs
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/.pub-cache/
+frontend/.pub/
+frontend/pubspec.lock
+
+# Flutter iOS
+frontend/ios/Flutter/Generated.xcconfig
+frontend/ios/Flutter/flutter_export_environment.sh
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/App.framework
+frontend/ios/Flutter/Flutter.framework
+frontend/ios/Flutter/Flutter.podspec
+frontend/ios/Runner/GeneratedPluginRegistrant.*
+
+# Flutter Android
+frontend/android/app/debug
+frontend/android/app/profile
+frontend/android/app/release
+frontend/android/.gradle/
+frontend/android/captures/
+frontend/android/gradlew
+frontend/android/gradlew.bat
+frontend/android/local.properties
+frontend/android/**/GeneratedPluginRegistrant.java
+
+# Flutter Web
+frontend/web/
+
+# Generated files
+frontend/lib/generated/
+frontend/lib/**/*.g.dart
+frontend/lib/**/*.freezed.dart
+
+# ================================
+# SHARED RESOURCES
+# ================================
+
+# Generated types (will be auto-generated)
+shared/types/generated-*
+shared/graphql/generated-*
+
+# ================================
+# GENERAL PATTERNS
+# ================================
 
 # Cache directories
 .cache/

@@ -21,7 +21,8 @@
   "dependencies": {
     "@apollo/server": "^5.0.0",
     "@prisma/client": "^6.13.0",
-    "graphql": "^16.11.0"
+    "graphql": "^16.11.0",
+    "graphql-import-files": "^1.5.2"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
