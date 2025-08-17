@@ -1,122 +1,417 @@
 import 'package:flutter/material.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  await initHiveForFlutter();
+  runApp(const DashboardApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class DashboardApp extends StatelessWidget {
+  const DashboardApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    final HttpLink httpLink = HttpLink(
+      'http://localhost:4000', // GraphQL backend endpoint
+    );
+
+    final ValueNotifier<GraphQLClient> client = ValueNotifier(
+      GraphQLClient(
+        link: httpLink,
+        cache: GraphQLCache(store: HiveStore()),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    );
+
+    return GraphQLProvider(
+      client: client,
+      child: MaterialApp(
+        title: 'Restaurant Admin Dashboard',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+          useMaterial3: true,
+        ),
+        home: const DashboardHome(),
+      ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class DashboardHome extends StatefulWidget {
+  const DashboardHome({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<DashboardHome> createState() => _DashboardHomeState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class _DashboardHomeState extends State<DashboardHome> {
+  int _selectedIndex = 0;
+  
+  final List<Widget> _pages = [
+    const UserManagementPage(),
+    const RestaurantManagementPage(),
+    const OrderManagementPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
+        title: const Text('Restaurant Admin Dashboard'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: Row(
+        children: [
+          NavigationRail(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (int index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            labelType: NavigationRailLabelType.all,
+            destinations: const [
+              NavigationRailDestination(
+                icon: Icon(Icons.people),
+                label: Text('User Management'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.restaurant),
+                label: Text('Restaurants'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.receipt_long),
+                label: Text('Orders'),
+              ),
+            ],
+          ),
+          const VerticalDivider(thickness: 1, width: 1),
+          Expanded(
+            child: _pages[_selectedIndex],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class UserManagementPage extends StatelessWidget {
+  const UserManagementPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'User Account Management',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 16),
+          Expanded(child: UserAccountTable()),
+        ],
+      ),
+    );
+  }
+}
+
+class RestaurantManagementPage extends StatelessWidget {
+  const RestaurantManagementPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text('Restaurant Management - Coming Soon'),
+    );
+  }
+}
+
+class OrderManagementPage extends StatelessWidget {
+  const OrderManagementPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text('Order Management - Coming Soon'),
+    );
+  }
+}
+
+class UserAccountTable extends StatelessWidget {
+  const UserAccountTable({super.key});
+
+  static const String getAllUsersQuery = '''
+    query GetAllUsers {
+      restaurants {
+        id
+        name
+        restaurantTeam {
+          uuid
+          name
+          jobType
+          isActive
+          createdAt
+          updatedAt
+        }
+      }
+    }
+  ''';
+
+  @override
+  Widget build(BuildContext context) {
+    return Query(
+      options: QueryOptions(
+        document: gql(getAllUsersQuery),
+        pollInterval: const Duration(seconds: 30),
+      ),
+      builder: (QueryResult result, {VoidCallback? refetch, FetchMore? fetchMore}) {
+        if (result.hasException) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                Text('Error: ${result.exception.toString()}'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: refetch,
+                  child: const Text('Retry'),
+                ),
+              ],
             ),
-          ],
+          );
+        }
+
+        if (result.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final restaurants = result.data?['restaurants'] as List?;
+        if (restaurants == null || restaurants.isEmpty) {
+          return const Center(child: Text('No restaurants found'));
+        }
+
+        // Flatten all restaurant team members into a single list
+        final allUsers = <Map<String, dynamic>>[];
+        for (final restaurant in restaurants) {
+          final restaurantTeam = restaurant['restaurantTeam'] as List?;
+          if (restaurantTeam != null) {
+            for (final user in restaurantTeam) {
+              allUsers.add({
+                ...user,
+                'restaurantName': restaurant['name'],
+                'restaurantId': restaurant['id'],
+              });
+            }
+          }
+        }
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total Users: ${allUsers.length}',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: refetch,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text('Name')),
+                        DataColumn(label: Text('Job Type')),
+                        DataColumn(label: Text('Restaurant')),
+                        DataColumn(label: Text('Status')),
+                        DataColumn(label: Text('Created At')),
+                        DataColumn(label: Text('Actions')),
+                      ],
+                      rows: allUsers.map((user) {
+                        final isActive = user['isActive'] as bool;
+                        final createdAt = DateTime.tryParse(user['createdAt'] ?? '');
+                        
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(user['name'] ?? 'N/A')),
+                            DataCell(Text(user['jobType'] ?? 'N/A')),
+                            DataCell(Text(user['restaurantName'] ?? 'N/A')),
+                            DataCell(
+                              Chip(
+                                label: Text(isActive ? 'Active' : 'Disabled'),
+                                backgroundColor: isActive ? Colors.green[100] : Colors.red[100],
+                                labelStyle: TextStyle(
+                                  color: isActive ? Colors.green[800] : Colors.red[800],
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              Text(createdAt != null 
+                                ? '${createdAt.day}/${createdAt.month}/${createdAt.year}'
+                                : 'N/A'
+                              ),
+                            ),
+                            DataCell(
+                              UserActionButtons(
+                                user: user,
+                                onUserUpdated: refetch,
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class UserActionButtons extends StatelessWidget {
+  final Map<String, dynamic> user;
+  final VoidCallback? onUserUpdated;
+
+  const UserActionButtons({
+    super.key,
+    required this.user,
+    this.onUserUpdated,
+  });
+
+  static const String updateUserMutation = '''
+    mutation UpdateUser(\$uuid: String!, \$input: UpdateRestaurantTeamInput!) {
+      updateRestaurantTeam(uuid: \$uuid, input: \$input) {
+        uuid
+        name
+        isActive
+      }
+    }
+  ''';
+
+  static const String deleteUserMutation = '''
+    mutation DeleteUser(\$uuid: String!) {
+      deleteRestaurantTeam(uuid: \$uuid)
+    }
+  ''';
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = user['isActive'] as bool;
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Mutation(
+          options: MutationOptions(
+            document: gql(updateUserMutation),
+            onCompleted: (data) {
+              onUserUpdated?.call();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(isActive 
+                    ? 'User account disabled successfully'
+                    : 'User account activated successfully'
+                  ),
+                ),
+              );
+            },
+            onError: (error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: ${error?.toString()}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+          ),
+          builder: (RunMutation runMutation, QueryResult? result) {
+            return IconButton(
+              onPressed: result?.isLoading == true ? null : () {
+                runMutation({
+                  'uuid': user['uuid'],
+                  'input': {'isActive': !isActive},
+                });
+              },
+              icon: Icon(
+                isActive ? Icons.block : Icons.check_circle,
+                color: isActive ? Colors.orange : Colors.green,
+              ),
+              tooltip: isActive ? 'Disable Account' : 'Activate Account',
+            );
+          },
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        Mutation(
+          options: MutationOptions(
+            document: gql(deleteUserMutation),
+            onCompleted: (data) {
+              onUserUpdated?.call();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('User account deleted successfully'),
+                ),
+              );
+            },
+            onError: (error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: ${error?.toString()}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+          ),
+          builder: (RunMutation runMutation, QueryResult? result) {
+            return IconButton(
+              onPressed: result?.isLoading == true ? null : () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete User Account'),
+                    content: Text('Are you sure you want to delete ${user['name']}\'s account? This action cannot be undone.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          runMutation({'uuid': user['uuid']});
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              icon: const Icon(Icons.delete, color: Colors.red),
+              tooltip: 'Delete Account',
+            );
+          },
+        ),
+      ],
     );
   }
 }

@@ -34,6 +34,14 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  
+  # GraphQL client dependencies
+  graphql_flutter: ^5.1.2
+  gql: ^0.14.0
+  
+  # UI components for admin dashboard
+  data_table_2: ^2.5.9
+  material_symbols_icons: ^4.2719.3
 
 dev_dependencies:
   flutter_test:
