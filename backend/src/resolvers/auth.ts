@@ -177,6 +177,52 @@ export const authResolvers = {
           teamMember: null
         };
       }
+    },
+
+    // Complete invitation signup - links Supabase user to restaurant team
+    completeInvitation: async (_: any, { tempUuid }: { tempUuid: string }, context: Context) => {
+      try {
+        const user = requireAuth(context.auth);
+        
+        // Find the team member with temporary UUID
+        const teamMember = await context.prisma.restaurantTeam.findUnique({
+          where: { uuid: tempUuid },
+          include: { restaurant: true }
+        });
+
+        if (!teamMember) {
+          return {
+            success: false,
+            message: 'Invalid invitation link',
+            user: null,
+          };
+        }
+
+        // Update the team member with the real user ID and activate
+        await context.prisma.restaurantTeam.update({
+          where: { uuid: tempUuid },
+          data: { 
+            uuid: user.id,
+            isActive: true 
+          }
+        });
+
+        return {
+          success: true,
+          message: `Welcome to ${teamMember.restaurant.name}! Your account is now active.`,
+          user: {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+          },
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : 'Failed to complete invitation',
+          user: null,
+        };
+      }
     }
   }
 };

@@ -102,6 +102,8 @@ input CreateRestaurantInput {
   name: String!
   address: String!
   phone: String!
+  adminEmail: String!
+  adminName: String!
 }
 
 input UpdateRestaurantInput {
@@ -200,6 +202,13 @@ type LinkResult {
   teamMember: RestaurantTeam
 }
 
+type RestaurantCreationResult {
+  success: Boolean!
+  message: String!
+  restaurant: Restaurant
+  invitationSent: Boolean!
+}
+
 input SignUpInput {
   email: String!
   password: String!
@@ -232,7 +241,7 @@ type Query {
 }
 
 type Mutation {
-  createRestaurant(input: CreateRestaurantInput!): Restaurant!
+  createRestaurant(input: CreateRestaurantInput!): RestaurantCreationResult!
   updateRestaurant(id: Int!, input: UpdateRestaurantInput!): Restaurant!
   deleteRestaurant(id: Int!): Boolean!
   
@@ -264,4 +273,5 @@ type Mutation {
   signIn(input: SignInInput!): AuthResult!
   signOut: AuthResult!
   linkUserToTeamMember(existingUuid: String!): LinkResult!
+  completeInvitation(tempUuid: String!): AuthResult!
 }
