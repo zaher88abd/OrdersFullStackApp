@@ -9,6 +9,7 @@ import { orderResolvers } from './order';
 import { orderItemResolvers } from './orderItem';
 import { invoiceResolvers } from './invoice';
 import { teamResolvers } from './team';
+import { authResolvers } from './auth';
 
 // This function merges all resolvers into a single object
 // The spread operator (...) is like Python's dict unpacking
@@ -23,6 +24,7 @@ export const resolvers = {
     ...orderItemResolvers.Query,
     ...invoiceResolvers.Query,
     ...teamResolvers.Query,
+    ...authResolvers.Query,
   },
   
   Mutation: {
@@ -35,6 +37,7 @@ export const resolvers = {
     ...orderItemResolvers.Mutation,
     ...invoiceResolvers.Mutation,
     ...teamResolvers.Mutation,
+    ...authResolvers.Mutation,
   },
 
   // Type resolvers for field-level resolution

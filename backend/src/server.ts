@@ -29,11 +29,11 @@ export async function startServer(port: number = 4000) {
       
       // Context function runs for every request
       // Similar to FastAPI's Depends() for database sessions
-      context: async () => createContext(),
+      context: async ({ req }) => createContext({ req }),
     });
 
-    console.log(`=€ Server ready at: ${url}`);
-    console.log(`=Ê GraphQL Playground available in development mode`);
+    console.log(`=ï¿½ Server ready at: ${url}`);
+    console.log(`=ï¿½ GraphQL Playground available in development mode`);
     
     return { server, url };
   } catch (error) {

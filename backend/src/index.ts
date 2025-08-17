@@ -1,3 +1,6 @@
+// Load environment variables first
+import 'dotenv/config';
+
 // Application entry point - like if __name__ == "__main__" in Python
 import { startServer } from './server';
 

@@ -171,6 +171,47 @@ input CreateInvoiceInput {
   orderIds: [Int!]!
 }
 
+# Authentication types
+type User {
+  id: String!
+  email: String!
+  role: String!
+}
+
+type UserProfile {
+  id: String!
+  email: String!
+  role: String!
+  teamMember: RestaurantTeam
+  restaurant: Restaurant
+}
+
+type AuthResult {
+  success: Boolean!
+  message: String!
+  user: User
+  accessToken: String
+  refreshToken: String
+}
+
+type LinkResult {
+  success: Boolean!
+  message: String!
+  teamMember: RestaurantTeam
+}
+
+input SignUpInput {
+  email: String!
+  password: String!
+  name: String
+  role: String
+}
+
+input SignInInput {
+  email: String!
+  password: String!
+}
+
 # Root query and mutation types
 type Query {
   restaurants: [Restaurant!]!
@@ -184,6 +225,10 @@ type Query {
   orderItems(orderId: Int!): [OrderItem!]!
   invoices(restaurantId: Int!): [Invoice!]!
   restaurantTeam(restaurantId: Int!): [RestaurantTeam!]!
+  
+  # Authentication queries
+  me: User!
+  userProfile: UserProfile!
 }
 
 type Mutation {
@@ -213,4 +258,10 @@ type Mutation {
   deleteRestaurantTeam(uuid: String!): Boolean!
   
   createInvoice(input: CreateInvoiceInput!): Invoice!
+  
+  # Authentication mutations
+  signUp(input: SignUpInput!): AuthResult!
+  signIn(input: SignInInput!): AuthResult!
+  signOut: AuthResult!
+  linkUserToTeamMember(existingUuid: String!): LinkResult!
 }
