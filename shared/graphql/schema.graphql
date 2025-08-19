@@ -22,6 +22,8 @@ type Restaurant {
   name: String!
   address: String!
   phone: String!
+  createdAt: String!
+  updatedAt: String!
   invoices: [Invoice!]!
   rtables: [RTable!]!
   categories: [Category!]!
