@@ -5,6 +5,8 @@ class Restaurant {
   final String name;
   final String address;
   final String phone;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final List<RestaurantTeamMember> restaurantTeam;
 
   Restaurant({
@@ -12,6 +14,8 @@ class Restaurant {
     required this.name,
     required this.address,
     required this.phone,
+    this.createdAt,
+    this.updatedAt,
     required this.restaurantTeam,
   });
 
@@ -30,6 +34,8 @@ class Restaurant {
       name: json['name'],
       address: json['address'],
       phone: json['phone'],
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
       restaurantTeam: team,
     );
   }

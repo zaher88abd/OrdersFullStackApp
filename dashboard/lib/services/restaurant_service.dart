@@ -17,12 +17,15 @@ class RestaurantService {
         name
         address
         phone
+        createdAt
+        updatedAt
         restaurantTeam {
           uuid
           name
           jobType
           isActive
           createdAt
+          updatedAt
         }
       }
     }
@@ -35,6 +38,8 @@ class RestaurantService {
         name
         address
         phone
+        createdAt
+        updatedAt
         restaurantTeam {
           uuid
           name
@@ -67,6 +72,8 @@ class RestaurantService {
           name
           address
           phone
+          createdAt
+          updatedAt
         }
       }
     }
@@ -79,6 +86,8 @@ class RestaurantService {
         name
         address
         phone
+        createdAt
+        updatedAt
       }
     }
   ''';
