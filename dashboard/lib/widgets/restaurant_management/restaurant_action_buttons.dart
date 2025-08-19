@@ -51,7 +51,7 @@ class RestaurantActionButtons extends StatelessWidget {
       context: context,
       builder: (context) => _EditRestaurantDialog(restaurant: restaurant),
     );
-    
+
     if (result == true) {
       onRestaurantUpdated?.call();
     }
@@ -86,16 +86,14 @@ class RestaurantActionButtons extends StatelessWidget {
     if (confirmed != true) return;
 
     final restaurantService = RestaurantService.instance;
-    
+
     try {
       final response = await restaurantService.deleteRestaurant(restaurant.id);
 
       if (response.isSuccess) {
         onRestaurantUpdated?.call();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Restaurant deleted successfully'),
-          ),
+          const SnackBar(content: Text('Restaurant deleted successfully')),
         );
       } else {
         _showErrorSnackBar(context, response.error ?? 'Unknown error');
@@ -107,10 +105,7 @@ class RestaurantActionButtons extends StatelessWidget {
 
   void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error: $message'),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text('Error: $message'), backgroundColor: Colors.red),
     );
   }
 }
@@ -138,37 +133,50 @@ class _RestaurantDetailsDialog extends StatelessWidget {
                   ? '${restaurant.createdAt!.day}/${restaurant.createdAt!.month}/${restaurant.createdAt!.year}'
                   : 'N/A',
             ),
-            _buildInfoRow('Team Members', '${restaurant.teamMembers?.length ?? 0}'),
-            if (restaurant.teamMembers?.isNotEmpty == true) ...[
+            _buildInfoRow(
+              'Team Members',
+              '${restaurant.restaurantTeam.length}',
+            ),
+            if (restaurant.restaurantTeam.isNotEmpty == true) ...[
               const SizedBox(height: 16),
               const Text(
                 'Team Members:',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              ...restaurant.teamMembers!.map((member) => Padding(
-                padding: const EdgeInsets.only(left: 16, bottom: 4),
-                child: Row(
-                  children: [
-                    Icon(
-                      member.jobType == JobType.ADMIN ? Icons.admin_panel_settings : Icons.person,
-                      size: 16,
-                      color: member.jobType == JobType.ADMIN ? Colors.orange : Colors.blue,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('${member.name} (${member.jobType.name})'),
-                    const Spacer(),
-                    Chip(
-                      label: Text(member.isActive ? 'Active' : 'Inactive'),
-                      backgroundColor: member.isActive ? Colors.green[100] : Colors.orange[100],
-                      labelStyle: TextStyle(
-                        color: member.isActive ? Colors.green[800] : Colors.orange[800],
-                        fontSize: 12,
+              ...restaurant.restaurantTeam.map(
+                (member) => Padding(
+                  padding: const EdgeInsets.only(left: 16, bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        member.jobType == JobType.MANAGER
+                            ? Icons.admin_panel_settings
+                            : Icons.person,
+                        size: 16,
+                        color: member.jobType == JobType.MANAGER
+                            ? Colors.orange
+                            : Colors.blue,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Text('${member.name} (${member.jobType.name})'),
+                      const Spacer(),
+                      Chip(
+                        label: Text(member.isActive ? 'Active' : 'Inactive'),
+                        backgroundColor: member.isActive
+                            ? Colors.green[100]
+                            : Colors.orange[100],
+                        labelStyle: TextStyle(
+                          color: member.isActive
+                              ? Colors.green[800]
+                              : Colors.orange[800],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              )),
+              ),
             ],
           ],
         ),
@@ -242,7 +250,7 @@ class _EditRestaurantDialogState extends State<_EditRestaurantDialog> {
     });
 
     final restaurantService = RestaurantService.instance;
-    
+
     try {
       final response = await restaurantService.updateRestaurant(
         id: widget.restaurant.id,

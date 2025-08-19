@@ -185,7 +185,7 @@ class _RestaurantTableState extends State<RestaurantTable> {
                   ),
                   DataCell(
                     Chip(
-                      label: Text('${restaurant.teamMembers?.length ?? 0}'),
+                      label: Text('${restaurant.restaurantTeam.length}'),
                       backgroundColor: Colors.blue[100],
                       labelStyle: TextStyle(color: Colors.blue[800]),
                     ),

@@ -1,3 +1,5 @@
+import 'package:dashboard/models/restaurant.dart';
+
 import '../models/api_response.dart';
 import '../models/user.dart';
 import 'graphql_service.dart';
