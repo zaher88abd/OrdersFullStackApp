@@ -5,6 +5,7 @@ class Restaurant {
   final String name;
   final String address;
   final String phone;
+  final String? restaurantCode;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final List<RestaurantTeamMember> restaurantTeam;
@@ -14,6 +15,7 @@ class Restaurant {
     required this.name,
     required this.address,
     required this.phone,
+    this.restaurantCode,
     this.createdAt,
     this.updatedAt,
     required this.restaurantTeam,
@@ -34,10 +36,24 @@ class Restaurant {
       name: json['name'],
       address: json['address'],
       phone: json['phone'],
+      restaurantCode: json['restaurantCode'],
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
       restaurantTeam: team,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'address': address,
+      'phone': phone,
+      'restaurantCode': restaurantCode,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'restaurantTeam': restaurantTeam.map((member) => member.toJson()).toList(),
+    };
   }
 
   int get totalStaff => restaurantTeam.length;
@@ -76,6 +92,19 @@ class RestaurantTeamMember {
       restaurantName: json['restaurantName'],
       restaurantId: json['restaurantId'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'uuid': uuid,
+      'name': name,
+      'jobType': jobType.toString().split('.').last,
+      'isActive': isActive,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'restaurantName': restaurantName,
+      'restaurantId': restaurantId,
+    };
   }
 
   bool get isPendingInvitation => !isActive && uuid.startsWith('temp_');
