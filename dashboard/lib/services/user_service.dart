@@ -17,13 +17,41 @@ class UserService {
       restaurants {
         id
         name
+        restaurantCode
         restaurantTeam {
           uuid
           name
+          email
           jobType
           isActive
+          emailVerified
           createdAt
           updatedAt
+        }
+      }
+    }
+  ''';
+
+  static const String _getAllTeamMembersQuery = '''
+    query GetAllTeamMembers {
+      restaurants {
+        id
+        name
+        restaurantCode
+        restaurantTeam {
+          uuid
+          name
+          email
+          jobType
+          isActive
+          emailVerified
+          createdAt
+          updatedAt
+          restaurant {
+            id
+            name
+            restaurantCode
+          }
         }
       }
     }
@@ -49,6 +77,40 @@ class UserService {
   ''';
 
   // Service Methods
+
+  Future<List<User>> getUsers() async {
+    try {
+      final result = await _graphQL.query(_getAllTeamMembersQuery);
+      
+      if (result.hasException) {
+        throw Exception(result.exception.toString());
+      }
+
+      final restaurantsData = result.data?['restaurants'] as List?;
+      if (restaurantsData == null) {
+        return [];
+      }
+
+      final users = <User>[];
+
+      for (final restaurant in restaurantsData) {
+        final restaurantTeam = restaurant['restaurantTeam'] as List?;
+        if (restaurantTeam != null) {
+          for (final userJson in restaurantTeam) {
+            final user = User.fromJson({
+              ...userJson,
+              'restaurant': restaurant,
+            });
+            users.add(user);
+          }
+        }
+      }
+
+      return users;
+    } catch (e) {
+      throw Exception('Failed to fetch users: $e');
+    }
+  }
 
   Future<ApiResponse<UserData>> getAllUsers() async {
     try {

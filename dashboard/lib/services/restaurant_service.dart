@@ -17,13 +17,16 @@ class RestaurantService {
         name
         address
         phone
+        restaurantCode
         createdAt
         updatedAt
         restaurantTeam {
           uuid
           name
+          email
           jobType
           isActive
+          emailVerified
           createdAt
           updatedAt
         }
@@ -38,13 +41,16 @@ class RestaurantService {
         name
         address
         phone
+        restaurantCode
         createdAt
         updatedAt
         restaurantTeam {
           uuid
           name
+          email
           jobType
           isActive
+          emailVerified
           createdAt
           updatedAt
         }
@@ -120,6 +126,16 @@ class RestaurantService {
       return ApiResponse.success(restaurants);
     } catch (e) {
       return ApiResponse.error('Failed to fetch restaurants: $e');
+    }
+  }
+
+  // Simplified method for direct use
+  Future<List<Restaurant>> getRestaurants() async {
+    final response = await getAllRestaurants();
+    if (response.success) {
+      return response.data!;
+    } else {
+      throw Exception(response.error);
     }
   }
 
