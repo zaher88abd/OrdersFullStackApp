@@ -22,6 +22,7 @@ type Restaurant {
   name: String!
   address: String!
   phone: String!
+  restaurantCode: String
   createdAt: String!
   updatedAt: String!
   invoices: [Invoice!]!
@@ -33,9 +34,11 @@ type Restaurant {
 type RestaurantTeam {
   uuid: String!
   name: String!
+  email: String
   jobType: JobType!
   restaurantId: Int!
   isActive: Boolean!
+  emailVerified: Boolean!
   createdAt: String!
   updatedAt: String!
   restaurant: Restaurant!
@@ -104,8 +107,9 @@ input CreateRestaurantInput {
   name: String!
   address: String!
   phone: String!
-  adminEmail: String!
-  adminName: String!
+  managerEmail: String!
+  managerName: String!
+  managerPassword: String!
 }
 
 input UpdateRestaurantInput {
@@ -208,7 +212,9 @@ type RestaurantCreationResult {
   success: Boolean!
   message: String!
   restaurant: Restaurant
-  invitationSent: Boolean!
+  restaurantCode: String
+  accountCreated: Boolean!
+  emailSent: Boolean!
 }
 
 input SignUpInput {
@@ -221,6 +227,35 @@ input SignUpInput {
 input SignInInput {
   email: String!
   password: String!
+}
+
+# New input types for verification system
+input VerifyEmailInput {
+  email: String!
+  verificationCode: String!
+}
+
+input JoinRestaurantInput {
+  restaurantCode: String!
+  name: String!
+  email: String!
+  password: String!
+  jobType: JobType!
+}
+
+# New result types
+type VerifyEmailResult {
+  success: Boolean!
+  message: String!
+  restaurantCode: String
+}
+
+type JoinRestaurantResult {
+  success: Boolean!
+  message: String!
+  restaurantName: String
+  accountCreated: Boolean!
+  emailSent: Boolean!
 }
 
 # Root query and mutation types
@@ -276,4 +311,8 @@ type Mutation {
   signOut: AuthResult!
   linkUserToTeamMember(existingUuid: String!): LinkResult!
   completeInvitation(tempUuid: String!): AuthResult!
+  
+  # New verification mutations
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailResult!
+  joinRestaurant(input: JoinRestaurantInput!): JoinRestaurantResult!
 }
