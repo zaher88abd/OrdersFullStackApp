@@ -177,6 +177,34 @@ export const restaurantResolvers = {
           },
         });
 
+        // Also update Supabase user to confirm email
+        try {
+          // Find the Supabase user by email
+          const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+          
+          if (!listError && users) {
+            const supabaseUser = users.users.find(user => user.email === input.email);
+            
+            if (supabaseUser) {
+              // Update Supabase user to confirm email
+              const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+                supabaseUser.id,
+                {
+                  email_confirm: true,
+                }
+              );
+              
+              if (updateError) {
+                console.error('Failed to confirm email in Supabase:', updateError);
+              } else {
+                console.log(`✅ Email confirmed in Supabase for ${input.email}`);
+              }
+            }
+          }
+        } catch (supabaseError) {
+          console.error('Error updating Supabase user:', supabaseError);
+        }
+
         return {
           success: true,
           message: 'Email verified successfully! You can now access your restaurant dashboard.',
