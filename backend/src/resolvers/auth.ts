@@ -84,17 +84,79 @@ export const authResolvers = {
       }
     },
 
-    signIn: async (_: any, { input }: { input: SignInInput }) => {
+    signIn: async (_: any, { input }: { input: SignInInput }, context: Context) => {
       try {
+        console.log(`🔐 Sign in attempt for: ${input.email}`);
+        
         const { data, error } = await supabaseAdmin.auth.signInWithPassword({
           email: input.email,
           password: input.password
         });
 
         if (error) {
+          console.log(`❌ Supabase sign in error: ${error.message}`);
+          
+          // If error is "Email not confirmed", check our database
+          if (error.message.includes('Email not confirmed')) {
+            console.log('🔍 Checking if email is verified in our database...');
+            
+            const teamMember = await context.prisma.restaurantTeam.findFirst({
+              where: {
+                email: input.email,
+                emailVerified: true,
+              },
+            });
+
+            if (teamMember) {
+              console.log('✅ Email is verified in database, confirming in Supabase...');
+              
+              // Find and confirm the user in Supabase
+              const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+              
+              if (!listError && users) {
+                const supabaseUser = users.users.find(user => user.email === input.email);
+                
+                if (supabaseUser) {
+                  // Confirm email in Supabase
+                  const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+                    supabaseUser.id,
+                    {
+                      email_confirm: true,
+                    }
+                  );
+                  
+                  if (!updateError) {
+                    console.log('🔄 Email confirmed in Supabase, retrying sign in...');
+                    
+                    // Retry sign in
+                    const { data: retryData, error: retryError } = await supabaseAdmin.auth.signInWithPassword({
+                      email: input.email,
+                      password: input.password
+                    });
+
+                    if (!retryError && retryData) {
+                      return {
+                        success: true,
+                        message: 'Signed in successfully',
+                        user: {
+                          id: retryData.user?.id,
+                          email: retryData.user?.email,
+                          role: retryData.user?.user_metadata?.role || 'user'
+                        },
+                        accessToken: retryData.session?.access_token,
+                        refreshToken: retryData.session?.refresh_token
+                      };
+                    }
+                  }
+                }
+              }
+            }
+          }
+          
           throw new Error(`Sign in failed: ${error.message}`);
         }
 
+        console.log('✅ Sign in successful');
         return {
           success: true,
           message: 'Signed in successfully',
@@ -107,6 +169,7 @@ export const authResolvers = {
           refreshToken: data.session?.refresh_token
         };
       } catch (error) {
+        console.log(`💥 Sign in failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         return {
           success: false,
           message: error instanceof Error ? error.message : 'Sign in failed',
