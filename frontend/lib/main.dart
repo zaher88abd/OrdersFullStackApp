@@ -43,6 +43,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
     
     _router = GoRouter(
       initialLocation: '/',
+      refreshListenable: _authProvider, // Listen to auth state changes
       redirect: (context, state) {
         final isLoggedIn = _authProvider.isLoggedIn;
         final isAuthRoute = [
@@ -53,10 +54,14 @@ class _RestaurantAppState extends State<RestaurantApp> {
           '/sign-in'
         ].contains(state.matchedLocation.split('?')[0]);
 
+        print('🔄 Router redirect - isLoggedIn: $isLoggedIn, currentRoute: ${state.matchedLocation}');
+
         if (isLoggedIn && isAuthRoute) {
+          print('👤 User logged in, redirecting to home');
           return '/home';
         }
         if (!isLoggedIn && !isAuthRoute) {
+          print('🚫 User not logged in, redirecting to welcome');
           return '/';
         }
         return null;
