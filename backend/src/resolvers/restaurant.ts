@@ -253,14 +253,10 @@ export const restaurantResolvers = {
           };
         }
 
-        // Generate email verification code
-        const emailVerificationCode = generateEmailVerificationCode();
-        const codeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
-
         // Generate UUID for the team member
         const memberUuid = `emp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        // Create team member record
+        // Create team member record (staff members are active immediately, no email verification needed)
         await context.prisma.restaurantTeam.create({
           data: {
             uuid: memberUuid,
@@ -268,22 +264,21 @@ export const restaurantResolvers = {
             email: input.email,
             jobType: input.jobType,
             restaurantId: restaurant.id,
-            isActive: false, // Will be activated when email is verified
-            emailVerified: false,
-            emailVerificationCode,
-            codeExpiresAt,
+            isActive: true, // Staff members are active immediately
+            emailVerified: true, // No email verification required for staff
+            emailVerificationCode: null,
+            codeExpiresAt: null,
           },
         });
 
         // Create user account in Supabase
         let accountCreated = false;
-        let emailSent = false;
         
         try {
           const { data, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
             email: input.email,
             password: input.password,
-            email_confirm: false, // We'll handle email verification manually
+            email_confirm: true, // Staff members are auto-confirmed, no email verification needed
             user_metadata: {
               name: input.name,
               role: input.jobType.toLowerCase(),
@@ -296,11 +291,7 @@ export const restaurantResolvers = {
             console.error('Failed to create user account:', signUpError);
           } else {
             accountCreated = true;
-
-            // Send verification email with code
-            // TODO: Implement actual email sending service
-            console.log(`Email Verification Code for ${input.email}: ${emailVerificationCode}`);
-            emailSent = true;
+            console.log(`✅ Staff member account created for ${input.email} - no email verification required`);
           }
         } catch (authError) {
           console.error('Error creating user account:', authError);
@@ -308,12 +299,12 @@ export const restaurantResolvers = {
 
         return {
           success: true,
-          message: accountCreated && emailSent
-            ? `Successfully joined ${restaurant.name}! Verification code sent to ${input.email}`
+          message: accountCreated
+            ? `Successfully joined ${restaurant.name}! You can now sign in immediately.`
             : `Successfully joined ${restaurant.name}! Please check account creation.`,
           restaurantName: restaurant.name,
           accountCreated,
-          emailSent,
+          emailSent: false, // No email sent for staff members
         };
       } catch (error) {
         return {
