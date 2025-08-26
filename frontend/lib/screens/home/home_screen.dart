@@ -11,9 +11,10 @@ class HomeScreen extends StatelessWidget {
       builder: (context, authProvider, child) {
         final user = authProvider.currentUser?.user;
         final restaurant = authProvider.currentUser?.restaurant;
-        
+
         return Scaffold(
           appBar: AppBar(
+            automaticallyImplyLeading: false,
             title: const Text('Restaurant Manager'),
             backgroundColor: Theme.of(context).primaryColor,
             foregroundColor: Colors.white,
@@ -94,12 +95,12 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        
+
                         if (restaurant != null) ...[
                           const SizedBox(height: 16),
                           const Divider(),
                           const SizedBox(height: 16),
-                          
+
                           // Restaurant Info
                           Row(
                             children: [
@@ -128,7 +129,9 @@ class HomeScreen extends StatelessWidget {
                                         ),
                                         decoration: BoxDecoration(
                                           color: Theme.of(context).primaryColor,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Text(
                                           'Code: ${restaurant.restaurantCode}',
@@ -145,9 +148,9 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 12),
-                          
+
                           // Job Role Badge
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -155,7 +158,9 @@ class HomeScreen extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: _getJobTypeColor(user?.jobType ?? 'WAITER'),
+                              color: _getJobTypeColor(
+                                user?.jobType ?? 'WAITER',
+                              ),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -182,9 +187,9 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   // Coming Soon Section
                   Expanded(
                     child: Center(
