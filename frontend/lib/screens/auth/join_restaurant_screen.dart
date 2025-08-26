@@ -51,13 +51,33 @@ class _JoinRestaurantScreenState extends State<JoinRestaurantScreen> {
 
     if (success) {
       Fluttertoast.showToast(
-        msg: 'Successfully joined restaurant! Please check your email for verification code.',
+        msg: 'Successfully joined restaurant! Signing you in...',
         toastLength: Toast.LENGTH_LONG,
         backgroundColor: Colors.green,
       );
       
-      // Navigate to email verification with email parameter
-      context.pushReplacement('/verify-email?email=${_emailController.text.trim()}');
+      // Automatically sign in the user since staff accounts are active immediately
+      final signInSuccess = await authProvider.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      
+      if (signInSuccess) {
+        // Navigation will be handled automatically by GoRouter
+        Fluttertoast.showToast(
+          msg: 'Welcome! You are now signed in.',
+          toastLength: Toast.LENGTH_SHORT,
+          backgroundColor: Colors.green,
+        );
+      } else {
+        // If auto sign-in fails, go to sign-in screen
+        Fluttertoast.showToast(
+          msg: 'Account created successfully. Please sign in.',
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.orange,
+        );
+        context.pushReplacement('/sign-in');
+      }
     } else {
       Fluttertoast.showToast(
         msg: authProvider.error ?? 'Failed to join restaurant',
