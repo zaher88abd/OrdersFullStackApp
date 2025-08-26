@@ -257,7 +257,7 @@ export const restaurantResolvers = {
         const memberUuid = `emp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
         // Create team member record (staff members are active immediately, no email verification needed)
-        await context.prisma.restaurantTeam.create({
+        const teamMember = await context.prisma.restaurantTeam.create({
           data: {
             uuid: memberUuid,
             name: input.name,
@@ -270,6 +270,18 @@ export const restaurantResolvers = {
             codeExpiresAt: null,
           },
         });
+
+        console.log(`✅ Team member created: ${teamMember.email}, emailVerified: ${teamMember.emailVerified}, isActive: ${teamMember.isActive}`);
+
+        // Double-check: Ensure emailVerified is set to true for staff members
+        if (!teamMember.emailVerified) {
+          console.log('🔄 emailVerified was false, updating to true...');
+          await context.prisma.restaurantTeam.update({
+            where: { uuid: memberUuid },
+            data: { emailVerified: true, isActive: true },
+          });
+          console.log('✅ Updated emailVerified to true');
+        }
 
         // Create user account in Supabase
         let accountCreated = false;
