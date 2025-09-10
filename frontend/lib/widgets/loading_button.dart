@@ -32,8 +32,8 @@ class LoadingButton extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: borderRadius ?? BorderRadius.circular(12),
         ),
-        disabledBackgroundColor: backgroundColor?.withOpacity(0.6) ?? 
-            Theme.of(context).primaryColor.withOpacity(0.6),
+        disabledBackgroundColor: backgroundColor?.withValues(alpha: 0.6) ?? 
+            Theme.of(context).primaryColor.withValues(alpha: 0.6),
       ),
       child: isLoading
           ? SizedBox(

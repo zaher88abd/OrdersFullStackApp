@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:email_validator/email_validator.dart';
@@ -47,7 +47,6 @@ class _SignInScreenState extends State<SignInScreen> {
       // Navigate to main app
       context.pushReplacement('/home');
     } else {
-      print("${authProvider.error}");
       Fluttertoast.showToast(
         msg: authProvider.error ?? 'Sign in failed',
         toastLength: Toast.LENGTH_LONG,

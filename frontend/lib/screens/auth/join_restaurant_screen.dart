@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:email_validator/email_validator.dart';
@@ -50,7 +50,6 @@ class _JoinRestaurantScreenState extends State<JoinRestaurantScreen> {
     );
 
     if (success) {
-      print('🎯 Join restaurant successful, attempting automatic sign-in...');
       Fluttertoast.showToast(
         msg: 'Successfully joined restaurant! Signing you in...',
         toastLength: Toast.LENGTH_LONG,
@@ -63,10 +62,8 @@ class _JoinRestaurantScreenState extends State<JoinRestaurantScreen> {
         password: _passwordController.text,
       );
       
-      print('🔐 Automatic sign-in result: $signInSuccess');
       
       if (signInSuccess) {
-        print('✅ Auto sign-in successful, GoRouter should redirect to home');
         // Navigation will be handled automatically by GoRouter
         Fluttertoast.showToast(
           msg: 'Welcome! You are now signed in.',
@@ -74,8 +71,6 @@ class _JoinRestaurantScreenState extends State<JoinRestaurantScreen> {
           backgroundColor: Colors.green,
         );
       } else {
-        print('❌ Auto sign-in failed, redirecting to sign-in screen');
-        print('🔍 Auth error: ${authProvider.error}');
         // If auto sign-in fails, go to sign-in screen
         Fluttertoast.showToast(
           msg: 'Account created successfully. Please sign in.',

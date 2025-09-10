@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../menu/menu_management_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -41,15 +42,15 @@ class HomeScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Theme.of(context).primaryColor.withOpacity(0.1),
-                          Theme.of(context).primaryColor.withOpacity(0.05),
+                          Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                          Theme.of(context).primaryColor.withValues(alpha: 0.05),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: Theme.of(context).primaryColor.withOpacity(0.2),
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Column(
@@ -190,37 +191,53 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 40),
 
-                  // Coming Soon Section
+                  // Management Options
                   Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.construction,
-                            size: 80,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            'Dashboard Coming Soon!',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Menu management, order tracking, and more\nfeatures will be available here.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[500],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                    child: GridView.count(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.2,
+                      children: [
+                        // Menu Management
+                        _buildManagementCard(
+                          title: 'Menu Management',
+                          description: 'Add, edit, and organize your menu items',
+                          icon: Icons.restaurant_menu,
+                          color: Colors.orange,
+                          onTap: () => _navigateToMenuManagement(context),
+                        ),
+                        
+                        // Table Management
+                        _buildManagementCard(
+                          title: 'Table Management',
+                          description: 'Manage restaurant tables and seating',
+                          icon: Icons.table_restaurant,
+                          color: Colors.blue,
+                          onTap: () => _showComingSoon(context, 'Table Management'),
+                          isComingSoon: true,
+                        ),
+                        
+                        // Order Management
+                        _buildManagementCard(
+                          title: 'Order Management',
+                          description: 'View and process customer orders',
+                          icon: Icons.receipt_long,
+                          color: Colors.green,
+                          onTap: () => _showComingSoon(context, 'Order Management'),
+                          isComingSoon: true,
+                        ),
+                        
+                        // Staff Management
+                        _buildManagementCard(
+                          title: 'Staff Management',
+                          description: 'Manage restaurant team members',
+                          icon: Icons.group,
+                          color: Colors.purple,
+                          onTap: () => _showComingSoon(context, 'Staff Management'),
+                          isComingSoon: true,
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -269,5 +286,101 @@ class HomeScreen extends StatelessWidget {
       default:
         return jobType;
     }
+  }
+
+  Widget _buildManagementCard({
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    bool isComingSoon = false,
+  }) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: 24,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (isComingSoon)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Soon',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToMenuManagement(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const MenuManagementScreen(),
+      ),
+    );
+  }
+
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature coming soon!'),
+        backgroundColor: Colors.orange,
+      ),
+    );
   }
 }

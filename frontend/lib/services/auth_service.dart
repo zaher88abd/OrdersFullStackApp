@@ -1,4 +1,4 @@
-import 'package:shared_preferences/shared_preferences.dart';
+﻿import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/api_response.dart';
 import '../models/user.dart';
@@ -71,7 +71,7 @@ class AuthService {
     }
   ''';
 
-  // 🔄 New: Get current user profile
+  // ðŸ”„ New: Get current user profile
   static const String _getUserProfileQuery = '''
     query GetUserProfile {
       userProfile {
@@ -111,7 +111,6 @@ class AuthService {
     required String managerPassword,
   }) async {
     try {
-      print('🚀 Creating restaurant: $restaurantName for manager: $managerEmail');
       
       final result = await _graphql.mutate(
         _createRestaurantMutation,
@@ -127,11 +126,8 @@ class AuthService {
         },
       );
 
-      print('📡 GraphQL Result: ${result.data}');
-      print('❗ GraphQL Exceptions: ${result.exception}');
 
       if (result.hasException) {
-        print('❌ GraphQL Exception: ${result.exception}');
         return RestaurantCreationResult(
           success: false,
           message: result.exception.toString(),
@@ -141,10 +137,8 @@ class AuthService {
       }
 
       final data = result.data?['createRestaurant'];
-      print('📦 CreateRestaurant Data: $data');
       
       if (data == null) {
-        print('⚠️ No data received from createRestaurant mutation');
         return RestaurantCreationResult(
           success: false,
           message: 'No data received from server',
@@ -154,11 +148,9 @@ class AuthService {
       }
 
       final creationResult = RestaurantCreationResult.fromJson(data);
-      print('✅ Restaurant Creation Result: success=${creationResult.success}, message=${creationResult.message}');
       
       return creationResult;
     } catch (e) {
-      print('💥 Exception in createRestaurant: $e');
       return RestaurantCreationResult(
         success: false,
         message: 'Failed to create restaurant: $e',
@@ -266,7 +258,6 @@ class AuthService {
     required String password,
   }) async {
     try {
-      print('🔐 Attempting sign in for: $email');
       
       final result = await _graphql.mutate(
         _signInMutation,
@@ -278,24 +269,18 @@ class AuthService {
         },
       );
 
-      print('📡 Sign In GraphQL Result: ${result.data}');
-      print('❗ Sign In GraphQL Exceptions: ${result.exception}');
 
       if (result.hasException) {
-        print('❌ Sign In Exception: ${result.exception}');
         return ApiResponse.error(result.exception.toString());
       }
 
       final data = result.data?['signIn'];
-      print('📦 Sign In Data: $data');
       
       if (data == null) {
-        print('⚠️ No sign in data received');
         return ApiResponse.error('No data received from server');
       }
 
       if (!data['success']) {
-        print('❌ Sign in failed with message: ${data['message']}');
         return ApiResponse.error(data['message'] ?? 'Sign in failed');
       }
 
@@ -324,7 +309,7 @@ class AuthService {
         accessToken: data['accessToken'],
       );
 
-      // 🔄 Save user data locally for persistence
+      // ðŸ”„ Save user data locally for persistence
       await saveUserData(authUser);
 
       return ApiResponse.success(
@@ -336,7 +321,7 @@ class AuthService {
     }
   }
 
-  // 🔄 New: Get current user from server (for token validation)
+  // ðŸ”„ New: Get current user from server (for token validation)
   Future<ApiResponse<AuthUser>> getCurrentUser() async {
     try {
       final result = await _graphql.query(_getUserProfileQuery);
@@ -366,7 +351,7 @@ class AuthService {
     }
   }
 
-  // 🔄 Enhanced: Storage Methods with User Data
+  // ðŸ”„ Enhanced: Storage Methods with User Data
   Future<void> saveAuthToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
@@ -412,7 +397,7 @@ class AuthService {
     await clearAuthToken();
   }
 
-  // 🔄 Enhanced: Check login status with token validation
+  // ðŸ”„ Enhanced: Check login status with token validation
   Future<bool> isLoggedIn() async {
     final token = await getAuthToken();
     if (token == null || token.isEmpty) {
@@ -430,7 +415,7 @@ class AuthService {
     }
   }
 
-  // 🔄 Enhanced: Auto-restore user session
+  // ðŸ”„ Enhanced: Auto-restore user session
   Future<AuthUser?> restoreSession() async {
     try {
       final savedUser = await getSavedUserData();

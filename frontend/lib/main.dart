@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'providers/auth_provider.dart';
+import 'providers/menu_provider.dart';
 import 'services/graphql_service.dart';
 import 'screens/auth/welcome_screen.dart';
 import 'screens/auth/create_restaurant_screen.dart';
@@ -54,14 +55,10 @@ class _RestaurantAppState extends State<RestaurantApp> {
           '/sign-in'
         ].contains(state.matchedLocation.split('?')[0]);
 
-        print('🔄 Router redirect - isLoggedIn: $isLoggedIn, currentRoute: ${state.matchedLocation}');
-
         if (isLoggedIn && isAuthRoute) {
-          print('👤 User logged in, redirecting to home');
           return '/home';
         }
         if (!isLoggedIn && !isAuthRoute) {
-          print('🚫 User not logged in, redirecting to welcome');
           return '/';
         }
         return null;
@@ -105,8 +102,15 @@ class _RestaurantAppState extends State<RestaurantApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<AuthProvider>(
-      create: (_) => _authProvider,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthProvider>(
+          create: (_) => _authProvider,
+        ),
+        ChangeNotifierProvider<MenuProvider>(
+          create: (_) => MenuProvider(),
+        ),
+      ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           return MaterialApp.router(

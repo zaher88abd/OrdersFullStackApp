@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
 
@@ -35,7 +35,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔄 Enhanced: Initialize auth state with session restoration
+  // ðŸ”„ Enhanced: Initialize auth state with session restoration
   Future<void> initializeAuth() async {
     _setLoading(true);
     try {
@@ -43,15 +43,12 @@ class AuthProvider with ChangeNotifier {
       final restoredUser = await _authService.restoreSession();
       if (restoredUser != null) {
         _setUser(restoredUser);
-        print('✅ Session restored automatically for ${restoredUser.user.email}');
       } else {
         // No valid session found
         _isLoggedIn = false;
-        print('ℹ️ No valid session found, user needs to sign in');
       }
     } catch (e) {
       _setError('Failed to initialize authentication: $e');
-      print('❌ Session restoration failed: $e');
     } finally {
       _setLoading(false);
     }
@@ -187,16 +184,14 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // 🔄 Enhanced: Sign Out with full data cleanup
+  // ðŸ”„ Enhanced: Sign Out with full data cleanup
   Future<void> signOut() async {
     _setLoading(true);
     try {
       await _authService.clearUserData(); // Clear both token and user data
       _setUser(null);
-      print('✅ User signed out successfully');
     } catch (e) {
       _setError('Failed to sign out: $e');
-      print('❌ Sign out failed: $e');
     } finally {
       _setLoading(false);
     }
