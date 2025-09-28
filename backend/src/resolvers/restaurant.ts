@@ -1,30 +1,48 @@
 import { Context } from '../utils/context';
 import { supabaseAdmin } from '../utils/supabase';
 import { generateUniqueRestaurantCode, generateEmailVerificationCode } from '../utils/codeGenerator';
+import { Sentry } from '../instrument';
 
 export const restaurantResolvers = {
   Query: {
     restaurants: async (parent: any, args: any, context: Context) => {
-      return context.prisma.restaurant.findMany({
-        include: {
-          invoices: true,
-          rtables: true,
-          categories: true,
-          restaurantTeam: true,
+      return Sentry.startSpan(
+        {
+          op: "db.query",
+          name: "Get All Restaurants",
         },
-      });
+        async () => {
+          return context.prisma.restaurant.findMany({
+            include: {
+              invoices: true,
+              rtables: true,
+              categories: true,
+              restaurantTeam: true,
+            },
+          });
+        }
+      );
     },
     
     restaurant: async (parent: any, { id }: { id: number }, context: Context) => {
-      return context.prisma.restaurant.findUnique({
-        where: { id },
-        include: {
-          invoices: true,
-          rtables: true,
-          categories: true,
-          restaurantTeam: true,
+      return Sentry.startSpan(
+        {
+          op: "db.query",
+          name: "Get Restaurant by ID",
         },
-      });
+        async (span) => {
+          span.setAttribute("restaurant.id", id);
+          return context.prisma.restaurant.findUnique({
+            where: { id },
+            include: {
+              invoices: true,
+              rtables: true,
+              categories: true,
+              restaurantTeam: true,
+            },
+          });
+        }
+      );
     },
   },
 
@@ -34,7 +52,16 @@ export const restaurantResolvers = {
       { input }: { input: { name: string; address: string; phone: string; managerEmail: string; managerName: string; managerPassword: string } },
       context: Context
     ) => {
-      try {
+      return Sentry.startSpan(
+        {
+          op: "restaurant.create",
+          name: "Create Restaurant with Manager",
+        },
+        async (span) => {
+          span.setAttribute("restaurant.name", input.name);
+          span.setAttribute("manager.email", input.managerEmail);
+
+          try {
         // Generate unique restaurant code
         const restaurantCode = await generateUniqueRestaurantCode(context.prisma);
 
@@ -118,17 +145,20 @@ export const restaurantResolvers = {
           restaurantCode,
           accountCreated,
           emailSent,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          message: error instanceof Error ? error.message : 'Failed to create restaurant',
-          restaurant: null,
-          restaurantCode: null,
-          accountCreated: false,
-          emailSent: false,
-        };
-      }
+            };
+          } catch (error) {
+            Sentry.captureException(error);
+            return {
+              success: false,
+              message: error instanceof Error ? error.message : 'Failed to create restaurant',
+              restaurant: null,
+              restaurantCode: null,
+              accountCreated: false,
+              emailSent: false,
+            };
+          }
+        }
+      );
     },
 
     verifyEmail: async (

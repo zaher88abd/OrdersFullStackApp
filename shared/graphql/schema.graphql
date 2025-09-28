@@ -243,6 +243,11 @@ input JoinRestaurantInput {
   jobType: JobType!
 }
 
+# Test input for Sentry error validation
+input TestValidationInput {
+  email: String!
+}
+
 # New result types
 type VerifyEmailResult {
   success: Boolean!
@@ -271,10 +276,17 @@ type Query {
   orderItems(orderId: Int!): [OrderItem!]!
   invoices(restaurantId: Int!): [Invoice!]!
   restaurantTeam(restaurantId: Int!): [RestaurantTeam!]!
-  
+
   # Authentication queries
   me: User!
   userProfile: UserProfile!
+
+  # Test queries for Sentry error reporting
+  testSentryError: String
+  testDatabaseError: String
+  testValidationError(input: TestValidationInput!): String
+  testAuthError: String
+  testSentryCapture: String
 }
 
 type Mutation {
