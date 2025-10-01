@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'services/graphql_service.dart';
 import 'pages/user_management_page.dart';
-import 'pages/restaurant_management_page.dart';
+import 'pages/restaurant_management_page.dart';import 'package:sentry_flutter/sentry_flutter.dart';
+
 
 void main() async {
   await initHiveForFlutter();
@@ -10,7 +11,17 @@ void main() async {
   // Initialize GraphQL service
   GraphQLService.instance.initialize();
   
-  runApp(const DashboardApp());
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = 'https://bc09c3c702fdb94ce23279884427a296@o4510094273806336.ingest.us.sentry.io/4510094279442432';
+      // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
+      // We recommend adjusting this value in production.
+      options.tracesSampleRate = 1.0;
+    },
+    appRunner: () => runApp(SentryWidget(child: const DashboardApp())),
+  );
+  // TODO: Remove this line after sending the first sample event to sentry.
+  await Sentry.captureException(Exception('This is a sample exception.'));
 }
 
 class DashboardApp extends StatelessWidget {

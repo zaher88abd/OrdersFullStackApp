@@ -11,7 +11,8 @@ import 'screens/auth/create_restaurant_screen.dart';
 import 'screens/auth/join_restaurant_screen.dart';
 import 'screens/auth/email_verification_screen.dart';
 import 'screens/auth/sign_in_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/home/home_screen.dart';import 'package:sentry_flutter/sentry_flutter.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +24,20 @@ void main() async {
   // Initialize GraphQL service
   GraphQLService.instance.initialize();
   
-  runApp(const RestaurantApp());
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = 'https://bc09c3c702fdb94ce23279884427a296@o4510094273806336.ingest.us.sentry.io/4510094279442432';
+      // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
+      // We recommend adjusting this value in production.
+      options.tracesSampleRate = 1.0;
+      // The sampling rate for profiling is relative to tracesSampleRate
+      // Setting to 1.0 will profile 100% of sampled transactions:
+      options.profilesSampleRate = 1.0;
+    },
+    appRunner: () => runApp(SentryWidget(child: const RestaurantApp())),
+  );
+  // TODO: Remove this line after sending the first sample event to sentry.
+  await Sentry.captureException(Exception('This is a sample exception.'));
 }
 
 class RestaurantApp extends StatefulWidget {
