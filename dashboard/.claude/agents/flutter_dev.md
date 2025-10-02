@@ -54,7 +54,7 @@ Widget composition:
 - Performance widgets
 
 Platform features:
-- iOS specific UI
+- iOS specific Foreign key constraint violated on the constraint: `Category_restaurantId_fkey`UI
 - Android Material You
 - Platform channels
 - Native modules
