@@ -37,7 +37,6 @@ class User {
     );
   }
 
-
   Map<String, dynamic> toJson() {
     return {
       'uuid': uuid,
@@ -88,7 +87,6 @@ class Restaurant {
     );
   }
 
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -123,13 +121,10 @@ class AuthUser {
   final Restaurant restaurant;
   final String? accessToken;
 
-  AuthUser({
-    required this.user,
-    required this.restaurant,
-    this.accessToken,
-  });
+  AuthUser({required this.user, required this.restaurant, this.accessToken});
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
+    print("user info ${json}");
     return AuthUser(
       user: User.fromJson(json['user']),
       restaurant: Restaurant.fromJson(json['restaurant']),

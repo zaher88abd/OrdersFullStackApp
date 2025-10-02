@@ -57,7 +57,7 @@ dependencies:
   
   # UI Utilities
   flutter_spinkit: ^5.2.1
-  fluttertoast: ^8.2.8
+  fluttertoast: ^9.0.0
 
 dev_dependencies:
   sentry_dart_plugin: ^3.1.1
