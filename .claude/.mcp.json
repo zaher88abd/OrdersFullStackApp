@@ -7,6 +7,25 @@
         "mcp-server"
       ],
       "env": {}
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "/home/zaher/dev/projects/OrdersAPI_TS"
+      ],
+      "env": {}
+    },
+    "brave-search": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "BSAQLfyycH83oW0SwwNWQJRRIllr30U"
+      }
     }
   }
 }
