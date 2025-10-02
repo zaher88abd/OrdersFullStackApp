@@ -281,12 +281,6 @@ type Query {
   me: User!
   userProfile: UserProfile!
 
-  # Test queries for Sentry error reporting
-  testSentryError: String
-  testDatabaseError: String
-  testValidationError(input: TestValidationInput!): String
-  testAuthError: String
-  testSentryCapture: String
 }
 
 type Mutation {
