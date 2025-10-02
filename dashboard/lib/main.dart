@@ -6,11 +6,6 @@ import 'pages/restaurant_management_page.dart';import 'package:sentry_flutter/s
 
 
 void main() async {
-  await initHiveForFlutter();
-  
-  // Initialize GraphQL service
-  GraphQLService.instance.initialize();
-  
   await SentryFlutter.init(
     (options) {
       options.dsn = 'https://bc09c3c702fdb94ce23279884427a296@o4510094273806336.ingest.us.sentry.io/4510094279442432';
@@ -18,7 +13,14 @@ void main() async {
       // We recommend adjusting this value in production.
       options.tracesSampleRate = 1.0;
     },
-    appRunner: () => runApp(SentryWidget(child: const DashboardApp())),
+    appRunner: () async {
+      await initHiveForFlutter();
+
+      // Initialize GraphQL service
+      GraphQLService.instance.initialize();
+
+      runApp(SentryWidget(child: const DashboardApp()));
+    },
   );
   // TODO: Remove this line after sending the first sample event to sentry.
   await Sentry.captureException(Exception('This is a sample exception.'));
