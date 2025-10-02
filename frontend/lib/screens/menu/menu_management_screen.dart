@@ -14,6 +14,7 @@ class MenuManagementScreen extends StatefulWidget {
 
 class _MenuManagementScreenState extends State<MenuManagementScreen> {
   ItemsCategory? _selectedCategory;
+  bool _hasLoadedCategories = false;
 
   @override
   void initState() {
@@ -26,9 +27,15 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   void _loadCategories() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final menuProvider = Provider.of<MenuProvider>(context, listen: false);
-    
+
+    // Don't try to load if auth is still loading or already loaded
+    if (authProvider.isLoading || _hasLoadedCategories) {
+      return;
+    }
+
     final restaurantId = authProvider.currentUser?.restaurant.id;
     if (restaurantId != null) {
+      _hasLoadedCategories = true;
       menuProvider.loadCategories(restaurantId);
     }
   }
@@ -37,14 +44,14 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     setState(() {
       _selectedCategory = category;
     });
-    
+
     final menuProvider = Provider.of<MenuProvider>(context, listen: false);
     menuProvider.loadItems(category.id);
   }
 
   Future<void> _showAddCategoryDialog() async {
     final TextEditingController nameController = TextEditingController();
-    
+
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -83,14 +90,14 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   Future<void> _createCategory(String name) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final menuProvider = Provider.of<MenuProvider>(context, listen: false);
-    
+
     final restaurantId = authProvider.currentUser?.restaurant.id;
     if (restaurantId != null) {
       final success = await menuProvider.createCategory(
         name: name,
         restaurantId: restaurantId,
       );
-      
+
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Category "$name" added successfully')),
@@ -115,8 +122,15 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
       ),
-      body: Consumer<MenuProvider>(
-        builder: (context, menuProvider, child) {
+      body: Consumer2<MenuProvider, AuthProvider>(
+        builder: (context, menuProvider, authProvider, child) {
+          // Trigger loading when auth becomes available
+          if (!authProvider.isLoading && authProvider.isLoggedIn && !_hasLoadedCategories) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _loadCategories();
+            });
+          }
+
           if (menuProvider.isLoading && menuProvider.categories.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -128,10 +142,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 width: 280,
                 decoration: BoxDecoration(
                   border: Border(
-                    right: BorderSide(
-                      color: Colors.grey[300]!,
-                      width: 1,
-                    ),
+                    right: BorderSide(color: Colors.grey[300]!, width: 1),
                   ),
                 ),
                 child: Column(
@@ -168,10 +179,14 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Categories list
                     Expanded(
-                      child: menuProvider.categories.isEmpty
+                      child: () {
+                        print('DEBUG UI: Categories count: ${menuProvider.categories.length}');
+                        print('DEBUG UI: Categories list: ${menuProvider.categories}');
+                        return menuProvider.categories.isEmpty;
+                      }()
                           ? const Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -204,16 +219,19 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                               itemCount: menuProvider.categories.length,
                               itemBuilder: (context, index) {
                                 final category = menuProvider.categories[index];
-                                final isSelected = _selectedCategory?.id == category.id;
-                                
+                                final isSelected =
+                                    _selectedCategory?.id == category.id;
+
                                 return ListTile(
                                   title: Text(category.name),
                                   selected: isSelected,
-                                  selectedTileColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                                  selectedTileColor: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.1),
                                   leading: Icon(
                                     Icons.restaurant_menu,
-                                    color: isSelected 
-                                        ? Theme.of(context).primaryColor 
+                                    color: isSelected
+                                        ? Theme.of(context).primaryColor
                                         : Colors.grey,
                                   ),
                                   onTap: () => _onCategorySelected(category),
@@ -224,7 +242,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                   ],
                 ),
               ),
-              
+
               // Items main area
               Expanded(
                 child: Column(
@@ -246,7 +264,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                           const Icon(Icons.restaurant, color: Colors.green),
                           const SizedBox(width: 12),
                           Text(
-                            _selectedCategory != null 
+                            _selectedCategory != null
                                 ? '${_selectedCategory!.name} Items'
                                 : 'Menu Items',
                             style: const TextStyle(
@@ -264,11 +282,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Items content
-                    Expanded(
-                      child: _buildItemsContent(),
-                    ),
+                    Expanded(child: _buildItemsContent()),
                   ],
                 ),
               ),
@@ -287,26 +303,16 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.arrow_back,
-                  size: 64,
-                  color: Colors.grey,
-                ),
+                Icon(Icons.arrow_back, size: 64, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(
                   'Select a category',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Choose a category from the sidebar to view its items',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
@@ -330,18 +336,12 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'No items in ${_selectedCategory!.name}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 18, color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   'Add your first menu item',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
@@ -392,7 +392,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 ),
                 child: item.image.isNotEmpty
                     ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(8),
+                        ),
                         child: Image.network(
                           item.image,
                           fit: BoxFit.cover,
@@ -408,15 +410,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                         ),
                       )
                     : const Center(
-                        child: Icon(
-                          Icons.image,
-                          color: Colors.white,
-                          size: 32,
-                        ),
+                        child: Icon(Icons.image, color: Colors.white, size: 32),
                       ),
               ),
             ),
-            
+
             // Item details
             Expanded(
               flex: 2,
@@ -437,10 +435,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     const SizedBox(height: 4),
                     Text(
                       item.description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -467,9 +462,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     if (_selectedCategory != null) {
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => AddEditItemScreen(
-            categoryId: _selectedCategory!.id,
-          ),
+          builder: (context) =>
+              AddEditItemScreen(categoryId: _selectedCategory!.id),
         ),
       );
     }
@@ -478,10 +472,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   void _navigateToEditItem(MenuItem item) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => AddEditItemScreen(
-          categoryId: item.categoryId,
-          item: item,
-        ),
+        builder: (context) =>
+            AddEditItemScreen(categoryId: item.categoryId, item: item),
       ),
     );
   }

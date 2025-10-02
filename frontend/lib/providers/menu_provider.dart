@@ -44,7 +44,7 @@ class MenuProvider with ChangeNotifier {
 
     try {
       final response = await _menuService.getCategories(restaurantId);
-      
+
       if (response.success && response.data != null) {
         _categories = response.data!;
         notifyListeners();
