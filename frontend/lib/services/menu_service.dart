@@ -125,7 +125,6 @@ class MenuService {
   // Get all categories for a restaurant
   Future<ApiResponse<List<ItemsCategory>>> getCategories(int restaurantId) async {
     try {
-      
       final result = await _graphql.query(
         _getCategoriesQuery,
         variables: {'restaurantId': restaurantId},
