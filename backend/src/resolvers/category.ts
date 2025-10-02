@@ -23,6 +23,21 @@ export const categoryResolvers = {
       { input }: { input: { name: string; restaurantId: number } },
       context: Context
     ) => {
+      console.log('Creating category with input:', input);
+      console.log('Restaurant ID:', input.restaurantId, 'Type:', typeof input.restaurantId);
+
+      // First check if restaurant exists
+      const restaurant = await context.prisma.restaurant.findUnique({
+        where: { id: input.restaurantId }
+      });
+
+      if (!restaurant) {
+        console.error(`Restaurant with ID ${input.restaurantId} not found`);
+        throw new Error(`Restaurant with ID ${input.restaurantId} does not exist`);
+      }
+
+      console.log('Restaurant found:', restaurant.name);
+
       return context.prisma.category.create({
         data: input,
         include: {
