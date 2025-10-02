@@ -83,6 +83,7 @@ class AuthService {
           name
           email
           jobType
+          restaurantId
           isActive
           emailVerified
           createdAt
@@ -284,38 +285,25 @@ class AuthService {
         return ApiResponse.error(data['message'] ?? 'Sign in failed');
       }
 
-      // For now, we'll create a mock AuthUser since the backend response might be different
-      // You may need to adjust this based on your actual backend response structure
-      final authUser = AuthUser(
-        user: User(
-          uuid: data['user']['id'],
-          name: data['user']['email'].split('@')[0], // temporary name
-          email: data['user']['email'],
-          jobType: data['user']['role'].toUpperCase(),
-          restaurantId: 1, // temporary, should come from backend
-          isActive: true,
-          emailVerified: true,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-        restaurant: Restaurant(
-          id: 1, // temporary, should come from backend
-          name: 'Restaurant Name', // temporary
-          address: 'Address', // temporary
-          phone: 'Phone', // temporary
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-        accessToken: data['accessToken'],
-      );
+      // Store the access token first
+      if (data['accessToken'] != null) {
+        await saveAuthToken(data['accessToken']);
+      }
 
-      // ðŸ”„ Save user data locally for persistence
-      await saveUserData(authUser);
+      // Get the complete user profile with restaurant data
+      final userProfileResponse = await getCurrentUser();
 
-      return ApiResponse.success(
-        authUser,
-        message: data['message'] ?? 'Sign in successful',
-      );
+      if (userProfileResponse.success && userProfileResponse.data != null) {
+        // ðŸ"„ Save user data locally for persistence
+        await saveUserData(userProfileResponse.data!);
+
+        return ApiResponse.success(
+          userProfileResponse.data!,
+          message: data['message'] ?? 'Sign in successful',
+        );
+      } else {
+        return ApiResponse.error('Failed to fetch user profile: ${userProfileResponse.message}');
+      }
     } catch (e) {
       return ApiResponse.error('Failed to sign in: $e');
     }
@@ -333,6 +321,11 @@ class AuthService {
       final data = result.data?['userProfile'];
       if (data == null) {
         return ApiResponse.error('No user profile data received');
+      }
+
+      // Check if user is linked to a restaurant team
+      if (data['teamMember'] == null || data['restaurant'] == null) {
+        return ApiResponse.error('User is not associated with any restaurant. Please contact your restaurant admin to add you to the team.');
       }
 
       // Parse the user profile data
