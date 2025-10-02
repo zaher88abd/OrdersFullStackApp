@@ -59,7 +59,10 @@ export async function startServer(port: number = 4000) {
 
           // Context function runs for every request
           // Similar to FastAPI's Depends() for database sessions
-          context: async ({ req }) => createContext({ req }),
+          context: async ({ req }) => {
+            // console.log('🔥 GRAPHQL REQUEST RECEIVED:', req.body ? JSON.stringify(req.body, null, 2) : 'No body');
+            return createContext({ req });
+          },
         });
 
         console.log(`=� Server ready at: ${url}`);
