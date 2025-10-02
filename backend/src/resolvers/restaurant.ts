@@ -1,7 +1,10 @@
-import { Context } from '../utils/context';
-import { supabaseAdmin } from '../utils/supabase';
-import { generateUniqueRestaurantCode, generateEmailVerificationCode } from '../utils/codeGenerator';
-import { Sentry } from '../instrument';
+import { Context } from "../utils/context";
+import { supabaseAdmin } from "../utils/supabase";
+import {
+  generateUniqueRestaurantCode,
+  generateEmailVerificationCode,
+} from "../utils/codeGenerator";
+import { Sentry } from "../instrument";
 
 export const restaurantResolvers = {
   Query: {
@@ -23,8 +26,12 @@ export const restaurantResolvers = {
         }
       );
     },
-    
-    restaurant: async (parent: any, { id }: { id: number }, context: Context) => {
+
+    restaurant: async (
+      parent: any,
+      { id }: { id: number },
+      context: Context
+    ) => {
       return Sentry.startSpan(
         {
           op: "db.query",
@@ -49,7 +56,18 @@ export const restaurantResolvers = {
   Mutation: {
     createRestaurant: async (
       parent: any,
-      { input }: { input: { name: string; address: string; phone: string; managerEmail: string; managerName: string; managerPassword: string } },
+      {
+        input,
+      }: {
+        input: {
+          name: string;
+          address: string;
+          phone: string;
+          managerEmail: string;
+          managerName: string;
+          managerPassword: string;
+        };
+      },
       context: Context
     ) => {
       return Sentry.startSpan(
@@ -62,95 +80,109 @@ export const restaurantResolvers = {
           span.setAttribute("manager.email", input.managerEmail);
 
           try {
-        // Generate unique restaurant code
-        const restaurantCode = await generateUniqueRestaurantCode(context.prisma);
+            // Generate unique restaurant code
+            const restaurantCode = await generateUniqueRestaurantCode(
+              context.prisma
+            );
 
-        // Create the restaurant
-        const restaurant = await context.prisma.restaurant.create({
-          data: {
-            name: input.name,
-            address: input.address,
-            phone: input.phone,
-            restaurantCode,
-          },
-          include: {
-            invoices: true,
-            rtables: true,
-            categories: true,
-            restaurantTeam: true,
-          },
-        });
+            // Create the restaurant
+            const restaurant = await context.prisma.restaurant.create({
+              data: {
+                name: input.name,
+                address: input.address,
+                phone: input.phone,
+                restaurantCode,
+              },
+              include: {
+                invoices: true,
+                rtables: true,
+                categories: true,
+                restaurantTeam: true,
+              },
+            });
 
-        // Generate email verification code
-        const emailVerificationCode = generateEmailVerificationCode();
-        const codeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+            // Generate email verification code
+            const emailVerificationCode = generateEmailVerificationCode();
+            const codeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
-        // Generate UUID for the manager
-        const managerUuid = `mgr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            // Create user account in Supabase first to get the real UUID
+            let accountCreated = false;
+            let emailSent = false;
+            let supabaseUserId = null;
 
-        // Create manager team member record
-        await context.prisma.restaurantTeam.create({
-          data: {
-            uuid: managerUuid,
-            name: input.managerName,
-            email: input.managerEmail,
-            jobType: 'MANAGER',
-            restaurantId: restaurant.id,
-            isActive: false, // Will be activated when email is verified
-            emailVerified: false,
-            emailVerificationCode,
-            codeExpiresAt,
-          },
-        });
+            try {
+              // Create user account
+              const { data, error: signUpError } =
+                await supabaseAdmin.auth.admin.createUser({
+                  email: input.managerEmail,
+                  password: input.managerPassword,
+                  email_confirm: false, // We'll handle email verification manually
+                  user_metadata: {
+                    name: input.managerName,
+                    role: "manager",
+                    restaurantId: restaurant.id.toString(),
+                    restaurantCode,
+                  },
+                });
 
-        // Create user account in Supabase
-        let accountCreated = false;
-        let emailSent = false;
-        
-        try {
-          // Create user account
-          const { data, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-            email: input.managerEmail,
-            password: input.managerPassword,
-            email_confirm: false, // We'll handle email verification manually
-            user_metadata: {
-              name: input.managerName,
-              role: 'manager',
-              restaurantId: restaurant.id.toString(),
+              if (signUpError) {
+                console.error("Failed to create user account:", signUpError);
+              } else {
+                accountCreated = true;
+                supabaseUserId = data.user?.id;
+
+                // Send verification email with code
+                // TODO: Implement actual email sending service (e.g., SendGrid, AWS SES)
+                // For now, we'll log the code
+                console.log(
+                  `Email Verification Code for ${input.managerEmail}: ${emailVerificationCode}`
+                );
+                emailSent = true;
+              }
+            } catch (authError) {
+              console.error("Error creating user account:", authError);
+            }
+
+            // Create manager team member record using the Supabase user ID
+            const managerUuid = supabaseUserId;
+            if (managerUuid == null)
+              return {
+                success: false,
+                message: "Error with create new user.",
+              };
+            await context.prisma.restaurantTeam.create({
+              data: {
+                uuid: managerUuid,
+                name: input.managerName,
+                email: input.managerEmail,
+                jobType: "MANAGER",
+                restaurantId: restaurant.id,
+                isActive: false, // Will be activated when email is verified
+                emailVerified: false,
+                emailVerificationCode,
+                codeExpiresAt,
+              },
+            });
+
+            return {
+              success: true,
+              message:
+                accountCreated && emailSent
+                  ? `Restaurant created successfully! Restaurant Code: ${restaurantCode}. Verification code sent to ${input.managerEmail}`
+                  : `Restaurant created successfully! Restaurant Code: ${restaurantCode}. Please check account creation.`,
+              restaurant,
               restaurantCode,
-            },
-          });
-
-          if (signUpError) {
-            console.error('Failed to create user account:', signUpError);
-          } else {
-            accountCreated = true;
-
-            // Send verification email with code
-            // TODO: Implement actual email sending service (e.g., SendGrid, AWS SES)
-            // For now, we'll log the code
-            console.log(`Email Verification Code for ${input.managerEmail}: ${emailVerificationCode}`);
-            emailSent = true;
-          }
-        } catch (authError) {
-          console.error('Error creating user account:', authError);
-        }
-
-        return {
-          success: true,
-          message: accountCreated && emailSent
-            ? `Restaurant created successfully! Restaurant Code: ${restaurantCode}. Verification code sent to ${input.managerEmail}`
-            : `Restaurant created successfully! Restaurant Code: ${restaurantCode}. Please check account creation.`,
-          restaurant,
-          restaurantCode,
-          accountCreated,
-          emailSent,
+              accountCreated,
+              emailSent,
             };
           } catch (error) {
             Sentry.captureException(error);
             return {
               success: false,
-              message: error instanceof Error ? error.message : 'Failed to create restaurant',
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to create restaurant",
               restaurant: null,
               restaurantCode: null,
               accountCreated: false,
@@ -182,7 +214,7 @@ export const restaurantResolvers = {
         if (!teamMember) {
           return {
             success: false,
-            message: 'Invalid email or verification code',
+            message: "Invalid email or verification code",
           };
         }
 
@@ -190,7 +222,7 @@ export const restaurantResolvers = {
         if (teamMember.codeExpiresAt && teamMember.codeExpiresAt < new Date()) {
           return {
             success: false,
-            message: 'Verification code has expired. Please request a new one.',
+            message: "Verification code has expired. Please request a new one.",
           };
         }
 
@@ -210,47 +242,65 @@ export const restaurantResolvers = {
         // Also update Supabase user to confirm email
         try {
           // Find the Supabase user by email
-          const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-          
+          const { data: users, error: listError } =
+            await supabaseAdmin.auth.admin.listUsers();
+
           if (!listError && users) {
-            const supabaseUser = users.users.find(user => user.email === input.email);
-            
+            const supabaseUser = users.users.find(
+              (user) => user.email === input.email
+            );
+
             if (supabaseUser) {
               // Update Supabase user to confirm email
-              const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-                supabaseUser.id,
-                {
+              const { error: updateError } =
+                await supabaseAdmin.auth.admin.updateUserById(supabaseUser.id, {
                   email_confirm: true,
-                }
-              );
-              
+                });
+
               if (updateError) {
-                console.error('Failed to confirm email in Supabase:', updateError);
+                console.error(
+                  "Failed to confirm email in Supabase:",
+                  updateError
+                );
               } else {
-                console.log(`✅ Email confirmed in Supabase for ${input.email}`);
+                console.log(
+                  `✅ Email confirmed in Supabase for ${input.email}`
+                );
               }
             }
           }
         } catch (supabaseError) {
-          console.error('Error updating Supabase user:', supabaseError);
+          console.error("Error updating Supabase user:", supabaseError);
         }
 
         return {
           success: true,
-          message: 'Email verified successfully! You can now access your restaurant dashboard.',
+          message:
+            "Email verified successfully! You can now access your restaurant dashboard.",
           restaurantCode: teamMember.restaurant.restaurantCode || undefined,
         };
       } catch (error) {
         return {
           success: false,
-          message: error instanceof Error ? error.message : 'Failed to verify email',
+          message:
+            error instanceof Error ? error.message : "Failed to verify email",
         };
       }
     },
 
     joinRestaurant: async (
       parent: any,
-      { input }: { input: { restaurantCode: string; name: string; email: string; password: string; jobType: 'CHEF' | 'WAITER' } },
+      {
+        input,
+      }: {
+        input: {
+          restaurantCode: string;
+          name: string;
+          email: string;
+          password: string;
+          jobType: "CHEF" | "WAITER";
+        };
+      },
       context: Context
     ) => {
       try {
@@ -264,7 +314,7 @@ export const restaurantResolvers = {
         if (!restaurant) {
           return {
             success: false,
-            message: 'Invalid restaurant code',
+            message: "Invalid restaurant code",
           };
         }
 
@@ -279,14 +329,46 @@ export const restaurantResolvers = {
         if (existingMember) {
           return {
             success: false,
-            message: 'Email is already registered for this restaurant',
+            message: "Email is already registered for this restaurant",
           };
         }
 
-        // Generate UUID for the team member
-        const memberUuid = `emp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // Create user account in Supabase first to get the real UUID
+        let accountCreated = false;
+        let supabaseUserId = null;
 
-        // Create team member record (staff members are active immediately, no email verification needed)
+        try {
+          const { data, error: signUpError } =
+            await supabaseAdmin.auth.admin.createUser({
+              email: input.email,
+              password: input.password,
+              email_confirm: true, // Staff members are auto-confirmed, no email verification needed
+              user_metadata: {
+                name: input.name,
+                role: input.jobType.toLowerCase(),
+                restaurantId: restaurant.id.toString(),
+                restaurantCode: restaurant.restaurantCode,
+              },
+            });
+
+          if (signUpError) {
+            console.error("Failed to create user account:", signUpError);
+          } else {
+            accountCreated = true;
+            supabaseUserId = data.user?.id;
+            console.log(
+              `✅ Staff member account created for ${input.email} - no email verification required`
+            );
+          }
+        } catch (authError) {
+          console.error("Error creating user account:", authError);
+        }
+
+        // Create team member record using the Supabase user ID
+        const memberUuid =
+          supabaseUserId ||
+          `emp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
         const teamMember = await context.prisma.restaurantTeam.create({
           data: {
             uuid: memberUuid,
@@ -301,43 +383,9 @@ export const restaurantResolvers = {
           },
         });
 
-        console.log(`✅ Team member created: ${teamMember.email}, emailVerified: ${teamMember.emailVerified}, isActive: ${teamMember.isActive}`);
-
-        // Double-check: Ensure emailVerified is set to true for staff members
-        if (!teamMember.emailVerified) {
-          console.log('🔄 emailVerified was false, updating to true...');
-          await context.prisma.restaurantTeam.update({
-            where: { uuid: memberUuid },
-            data: { emailVerified: true, isActive: true },
-          });
-          console.log('✅ Updated emailVerified to true');
-        }
-
-        // Create user account in Supabase
-        let accountCreated = false;
-        
-        try {
-          const { data, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-            email: input.email,
-            password: input.password,
-            email_confirm: true, // Staff members are auto-confirmed, no email verification needed
-            user_metadata: {
-              name: input.name,
-              role: input.jobType.toLowerCase(),
-              restaurantId: restaurant.id.toString(),
-              restaurantCode: restaurant.restaurantCode,
-            },
-          });
-
-          if (signUpError) {
-            console.error('Failed to create user account:', signUpError);
-          } else {
-            accountCreated = true;
-            console.log(`✅ Staff member account created for ${input.email} - no email verification required`);
-          }
-        } catch (authError) {
-          console.error('Error creating user account:', authError);
-        }
+        console.log(
+          `✅ Team member created: ${teamMember.email}, emailVerified: ${teamMember.emailVerified}, isActive: ${teamMember.isActive}`
+        );
 
         return {
           success: true,
@@ -351,14 +399,23 @@ export const restaurantResolvers = {
       } catch (error) {
         return {
           success: false,
-          message: error instanceof Error ? error.message : 'Failed to join restaurant',
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to join restaurant",
         };
       }
     },
 
     updateRestaurant: async (
       parent: any,
-      { id, input }: { id: number; input: { name?: string; address?: string; phone?: string } },
+      {
+        id,
+        input,
+      }: {
+        id: number;
+        input: { name?: string; address?: string; phone?: string };
+      },
       context: Context
     ) => {
       return context.prisma.restaurant.update({
@@ -373,7 +430,11 @@ export const restaurantResolvers = {
       });
     },
 
-    deleteRestaurant: async (parent: any, { id }: { id: number }, context: Context) => {
+    deleteRestaurant: async (
+      parent: any,
+      { id }: { id: number },
+      context: Context
+    ) => {
       try {
         await context.prisma.restaurant.delete({
           where: { id },
@@ -404,7 +465,11 @@ export const restaurantResolvers = {
       });
     },
 
-    restaurantTeam: async (parent: { id: number }, args: any, context: Context) => {
+    restaurantTeam: async (
+      parent: { id: number },
+      args: any,
+      context: Context
+    ) => {
       return context.prisma.restaurantTeam.findMany({
         where: { restaurantId: parent.id },
       });
