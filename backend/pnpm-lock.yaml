@@ -38,6 +38,9 @@ importers:
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
+      ordersapi_ts:
+        specifier: 'link:'
+        version: 'link:'
     devDependencies:
       '@types/jest':
         specifier: ^30.0.0
