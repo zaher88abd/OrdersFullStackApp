@@ -11,22 +11,14 @@ import 'screens/auth/create_restaurant_screen.dart';
 import 'screens/auth/join_restaurant_screen.dart';
 import 'screens/auth/email_verification_screen.dart';
 import 'screens/auth/sign_in_screen.dart';
-import 'screens/home/home_screen.dart';import 'package:sentry_flutter/sentry_flutter.dart';
-
+import 'screens/home/home_screen.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Hive for GraphQL caching
-  await Hive.initFlutter();
-  await initHiveForFlutter();
-  
-  // Initialize GraphQL service
-  GraphQLService.instance.initialize();
-  
   await SentryFlutter.init(
     (options) {
-      options.dsn = 'https://bc09c3c702fdb94ce23279884427a296@o4510094273806336.ingest.us.sentry.io/4510094279442432';
+      options.dsn =
+          'https://bc09c3c702fdb94ce23279884427a296@o4510094273806336.ingest.us.sentry.io/4510094279442432';
       // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
       // We recommend adjusting this value in production.
       options.tracesSampleRate = 1.0;
@@ -34,9 +26,18 @@ void main() async {
       // Setting to 1.0 will profile 100% of sampled transactions:
       options.profilesSampleRate = 1.0;
     },
-    appRunner: () => runApp(SentryWidget(child: const RestaurantApp())),
+    appRunner: () async {
+      // Initialize Hive for GraphQL caching
+      await Hive.initFlutter();
+      await initHiveForFlutter();
+
+      WidgetsFlutterBinding.ensureInitialized();
+
+      // Initialize GraphQL service
+      GraphQLService.instance.initialize();
+      runApp(SentryWidget(child: const RestaurantApp()));
+    },
   );
-  // TODO: Remove this line after sending the first sample event to sentry.
   await Sentry.captureException(Exception('This is a sample exception.'));
 }
 
@@ -55,7 +56,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
   void initState() {
     super.initState();
     _authProvider = AuthProvider();
-    
+
     _router = GoRouter(
       initialLocation: '/',
       refreshListenable: _authProvider, // Listen to auth state changes
@@ -66,7 +67,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
           '/create-restaurant',
           '/join-restaurant',
           '/verify-email',
-          '/sign-in'
+          '/sign-in',
         ].contains(state.matchedLocation.split('?')[0]);
 
         if (isLoggedIn && isAuthRoute) {
@@ -78,10 +79,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
         return null;
       },
       routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const WelcomeScreen(),
-        ),
+        GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
         GoRoute(
           path: '/create-restaurant',
           builder: (context, state) => const CreateRestaurantScreen(),
@@ -101,10 +99,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
           path: '/sign-in',
           builder: (context, state) => const SignInScreen(),
         ),
-        GoRoute(
-          path: '/home',
-          builder: (context, state) => const HomeScreen(),
-        ),
+        GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       ],
     );
 
@@ -118,12 +113,8 @@ class _RestaurantAppState extends State<RestaurantApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AuthProvider>(
-          create: (_) => _authProvider,
-        ),
-        ChangeNotifierProvider<MenuProvider>(
-          create: (_) => MenuProvider(),
-        ),
+        ChangeNotifierProvider<AuthProvider>(create: (_) => _authProvider),
+        ChangeNotifierProvider<MenuProvider>(create: (_) => MenuProvider()),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
@@ -157,10 +148,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Colors.indigo,
-                    width: 2,
-                  ),
+                  borderSide: const BorderSide(color: Colors.indigo, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
