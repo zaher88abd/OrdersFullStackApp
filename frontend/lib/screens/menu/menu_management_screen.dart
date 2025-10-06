@@ -120,7 +120,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         title: const Text('Menu Management'),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
       ),
       body: Consumer2<MenuProvider, AuthProvider>(
         builder: (context, menuProvider, authProvider, child) {
